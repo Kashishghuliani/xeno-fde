@@ -1,3 +1,4 @@
+// app.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -10,26 +11,25 @@ const scheduler = require('./jobs/scheduler');
 
 const app = express();
 
-// ✅ Allow frontend (React) to talk to backend
+// ===== Middleware =====
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
 }));
-
-// ✅ Parse JSON requests
 app.use(bodyParser.json());
 
-// ✅ API routes
+// ===== API Routes =====
 app.use('/api/auth', authRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/ingest', ingestRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
+// ===== Root Route (Health Check) =====
+app.get('/', (req, res) => {
+  res.json({ status: 'Backend is running!' });
+});
 
-// ✅ Health check
-app.get('/', (req, res) => res.json({ status: 'ok' }));
-
-// ✅ Init function
+// ===== Init Function =====
 async function init() {
   try {
     await sequelize.authenticate();

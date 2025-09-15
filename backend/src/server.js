@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -20,6 +19,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
+
+// ===== Root Route (Health Check) =====
+app.get('/', (req, res) => {
+  res.json({ status: 'Backend is running!', environment: process.env.NODE_ENV || 'development' });
+});
 
 // ===== Auth Routes =====
 app.use('/api/auth', authRoutes); // register & login now handled here
@@ -45,11 +49,9 @@ function authMiddleware(req, res, next) {
 app.get('/api/dashboard/metrics', authMiddleware, async (req, res) => {
   try {
     const tenantId = req.user.tenantId;
-
     const totalCustomers = await Customer.count({
       where: { tenant_id: tenantId, email: { [require('sequelize').Op.ne]: null } }
     });
-
     const totalOrders = await Order.count({ where: { tenant_id: tenantId } });
     const revenue = await Order.sum('total_price', { where: { tenant_id: tenantId } }) || 0;
 
@@ -111,7 +113,6 @@ app.get('/api/dashboard/top-customers', authMiddleware, async (req, res) => {
     });
 
     const customerMap = new Map();
-
     for (const c of customers) {
       const totalSpent = c.Orders.reduce((sum, o) => sum + Number(o.total_price || 0), 0);
       if (customerMap.has(c.email)) {
