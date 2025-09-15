@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const sequelize = require('./sequelize');
-const { Tenant, Customer, Order, Product } = require('./models'); 
+const { Tenant, Customer, Order, Product } = require('./models');
 const { syncShopify } = require('./controllers/syncController');
 
 // Import auth routes
@@ -13,19 +13,26 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ===== CORS Setup =====
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000').split(',');
+// Split FRONTEND_URL from .env and trim whitespace
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map(url => url.trim());
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests like Postman
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error(`CORS policy: Origin ${origin} not allowed`));
-  },
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-}));
+// Middleware to handle CORS
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin) || !origin) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+  }
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 
+// ===== Body Parser =====
 app.use(express.json());
 
 // ===== Root Route (Health Check) =====
@@ -52,7 +59,7 @@ function authMiddleware(req, res, next) {
 }
 
 // ===== Dashboard Routes =====
-// Example placeholders (replace with your actual route handlers)
+// Replace these with your actual implementations
 app.get('/api/dashboard/metrics', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/recent-orders', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/top-customers', authMiddleware, async (req, res) => { /* ... */ });
