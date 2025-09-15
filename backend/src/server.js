@@ -13,31 +13,37 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ===== CORS Setup =====
-// Split FRONTEND_URL from .env and trim whitespace
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .split(',')
   .map(url => url.trim());
 
-// Middleware to handle CORS
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin) || !origin) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-  }
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
-  next();
-});
+app.use(cors({
+  origin: function (origin, callback) {
+    // allow requests with no origin (like curl or mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}));
+
+// Automatically handle OPTIONS preflight requests
+app.options('*', cors());
 
 // ===== Body Parser =====
 app.use(express.json());
 
 // ===== Root Route (Health Check) =====
 app.get('/', (req, res) => {
-  res.json({ status: 'Backend is running!', environment: process.env.NODE_ENV || 'development' });
+  res.json({
+    status: 'Backend is running!',
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // ===== Auth Routes =====
@@ -59,7 +65,6 @@ function authMiddleware(req, res, next) {
 }
 
 // ===== Dashboard Routes =====
-// Replace these with your actual implementations
 app.get('/api/dashboard/metrics', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/recent-orders', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/top-customers', authMiddleware, async (req, res) => { /* ... */ });
