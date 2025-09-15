@@ -3,8 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 const sequelize = require('./sequelize');
-const { Tenant, Customer, Order, Product } = require('./models');
+const { Tenant } = require('./models');
 const { syncShopify } = require('./controllers/syncController');
+const dashboardController = require('./controllers/dashboardController');
 
 // Import auth routes
 const authRoutes = require('./routes/auth');
@@ -13,26 +14,11 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ===== CORS Setup =====
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
-  .split(',')
-  .map(url => url.trim());
-
 app.use(cors({
-  origin: function (origin, callback) {
-    // allow requests with no origin (Postman, mobile apps)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.log(`Blocked CORS request from: ${origin}`);
-    // Respond without Access-Control-Allow-Origin instead of throwing error
-    return callback(null, false);
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+  origin: 'https://xeno-fde.vercel.app', // frontend URL
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+  credentials: true
 }));
 
 // ===== Body Parser =====
@@ -64,15 +50,28 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ===== Dashboard Routes (examples) =====
-app.get('/api/dashboard/metrics', authMiddleware, async (req, res) => { /* ... */ });
-app.get('/api/dashboard/recent-orders', authMiddleware, async (req, res) => { /* ... */ });
-app.get('/api/dashboard/top-customers', authMiddleware, async (req, res) => { /* ... */ });
-app.get('/api/dashboard/top-products', authMiddleware, async (req, res) => { /* ... */ });
-app.get('/api/dashboard/orders-by-date', authMiddleware, async (req, res) => { /* ... */ });
-app.get('/api/dashboard/customers-by-date', authMiddleware, async (req, res) => { /* ... */ });
+// ===== Helper for error-wrapped routes =====
+function wrapAsync(fn) {
+  return async (req, res) => {
+    try {
+      await fn(req, res);
+    } catch (err) {
+      console.error(`❌ Error in ${req.path}:`, err);
+      res.status(500).json({ error: 'Server error' });
+    }
+  };
+}
 
-app.post('/api/sync/shopify', authMiddleware, syncShopify);
+// ===== Dashboard Routes (with error logging) =====
+app.get('/api/dashboard/metrics', authMiddleware, wrapAsync(dashboardController.getMetrics));
+app.get('/api/dashboard/recent-orders', authMiddleware, wrapAsync(dashboardController.recentOrders));
+app.get('/api/dashboard/top-customers', authMiddleware, wrapAsync(dashboardController.topCustomers));
+app.get('/api/dashboard/top-products', authMiddleware, wrapAsync(dashboardController.topProducts));
+app.get('/api/dashboard/orders-by-date', authMiddleware, wrapAsync(dashboardController.ordersByDate));
+app.get('/api/dashboard/customers-by-date', authMiddleware, wrapAsync(dashboardController.customersByDate));
+
+// ===== Shopify Sync Route =====
+app.post('/api/sync/shopify', authMiddleware, wrapAsync(syncShopify));
 
 // ===== Start Server =====
 async function initServer() {
