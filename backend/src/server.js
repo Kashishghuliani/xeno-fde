@@ -10,11 +10,12 @@ const { syncShopify } = require('./controllers/syncController');
 const authRoutes = require('./routes/auth');
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;   
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // ===== Middleware =====
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: FRONTEND_URL,
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
@@ -234,7 +235,6 @@ app.get('/api/dashboard/customers-by-date', authMiddleware, async (req, res) => 
   }
 });
 
-// ===== Sync Routes =====
 app.post('/api/sync/shopify', authMiddleware, syncShopify);
 
 // ===== Start Server =====
@@ -243,14 +243,18 @@ async function initServer() {
     await sequelize.sync();
     console.log('✅ Database & models synced');
 
+    // Create default tenant if none exists
     let tenant = await Tenant.findByPk(1);
     if (!tenant) {
-      tenant = await Tenant.create({ name: 'Main Tenant', shopify_store: process.env.SHOPIFY_STORE });
+      tenant = await Tenant.create({
+        name: 'Main Tenant',
+        shopify_store: process.env.SHOPIFY_STORE
+      });
       console.log('✅ Created main tenant');
     }
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   } catch (err) {
     console.error('❌ Server init error:', err);
