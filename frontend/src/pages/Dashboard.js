@@ -49,7 +49,16 @@ export default function Dashboard({ tenantId, onLogout }) {
 
       setTopCustomers(customers.data || []);
       setTopProducts(products.data || []);
-      setRecentOrders(recents.data || []);
+      setRecentOrders(
+  (recents.data || []).sort((a, b) => {
+    // if backend provides created_at
+    if (a.created_at && b.created_at) {
+      return new Date(b.created_at) - new Date(a.created_at);
+    }
+    // fallback: sort by order id (assuming higher id = newer)
+    return (b.id || b.shopify_order_id) - (a.id || a.shopify_order_id);
+  })
+);
       setCustomersByDate(
         custGrowth.data.map((item) => ({
           date: item.date,
