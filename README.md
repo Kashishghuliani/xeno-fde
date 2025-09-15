@@ -32,8 +32,8 @@ Shopify Partner development store with API keys
 
 Steps
 Clone the repo:
-git clone https://github.com/<your-username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/Kashishghuliani/xeno-fde.git
+cd xeno-fde
 
 Install dependencies:
 npm install
