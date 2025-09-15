@@ -7,7 +7,7 @@ async function syncShopify(req, res) {
     const tenantId = req.user.tenantId;
 
     // ===== 1. Sync Customers =====
-    const customers = await fetchCustomers();
+    const customers = await fetchCustomers() || [];
     for (const c of customers) {
       if (!c.id || !c.email) continue;
       await Customer.upsert({
@@ -20,9 +20,7 @@ async function syncShopify(req, res) {
     }
 
     // ===== 2. Sync Orders =====
-    const orders = await fetchOrders();
-
-    // Fetch existing orders to avoid duplicates
+    const orders = await fetchOrders() || [];
     const existingOrders = await Order.findAll({
       where: { tenant_id: tenantId },
       attributes: ['shopify_order_id']
@@ -43,22 +41,19 @@ async function syncShopify(req, res) {
           shopify_order_id: o.id.toString(),
           customer_id: dbCustomer.id,
           total_price: parseFloat(o.total_price || 0),
-          createdAt: o.created_at || new Date()
+          createdAt: o.created_at ? new Date(o.created_at) : new Date()
         });
       }
     }
 
-    // ===== 3. Recalculate total_spent for all customers =====
+    // ===== 3. Recalculate total_spent =====
     const customerTotals = await Order.findAll({
       where: { tenant_id: tenantId },
       attributes: ['customer_id', [Sequelize.fn('SUM', Sequelize.col('total_price')), 'total']],
       group: ['customer_id']
     });
 
-    // Reset all totals first
     await Customer.update({ total_spent: 0 }, { where: { tenant_id: tenantId } });
-
-    // Update totals per customer
     for (const t of customerTotals) {
       await Customer.update(
         { total_spent: parseFloat(t.get('total')) },
@@ -67,7 +62,7 @@ async function syncShopify(req, res) {
     }
 
     // ===== 4. Sync Products =====
-    const products = await fetchProducts();
+    const products = await fetchProducts() || [];
     for (const p of products) {
       if (!p.id) continue;
       await Product.upsert({
@@ -79,8 +74,9 @@ async function syncShopify(req, res) {
     }
 
     res.json({ message: '✅ Shopify sync completed successfully' });
+
   } catch (err) {
-    console.error('❌ Sync error', err.response?.data || err.message);
+    console.error('❌ Sync error', err.response?.data || err.message || err);
     res.status(500).json({ error: 'Failed to sync Shopify data' });
   }
 }

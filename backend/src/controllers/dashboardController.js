@@ -1,6 +1,7 @@
-const { Customer, Order } = require('../models');
+const { Customer, Order, Product } = require('../models');
 const { Sequelize, Op } = require('sequelize');
 
+// ===== 1️⃣ Metrics =====
 async function getMetrics(req, res) {
   const tenantId = req.tenantId;
 
@@ -21,6 +22,7 @@ async function getMetrics(req, res) {
   res.json({ totalCustomers, totalOrders, revenue: Number(revenue.toFixed(2)) });
 }
 
+// ===== 2️⃣ Orders by Date =====
 async function ordersByDate(req, res) {
   const tenantId = req.tenantId;
   const from = req.query.from ? new Date(req.query.from) : new Date(Date.now() - 30*24*3600*1000);
@@ -30,8 +32,8 @@ async function ordersByDate(req, res) {
     where: { tenant_id: tenantId, createdAt: { [Op.between]: [from, to] } },
     attributes: [
       [Sequelize.fn('DATE', Sequelize.col('createdAt')), 'date'],
-      [Sequelize.fn('COUNT', Sequelize.col('id')), 'orders'],
-      [Sequelize.fn('SUM', Sequelize.col('total_price')), 'revenue']
+      [Sequelize.fn('COUNT', Sequelize.col('id')), 'orderCount'],
+      [Sequelize.fn('SUM', Sequelize.col('total_price')), 'totalRevenue']
     ],
     group: ['date'],
     order: [[Sequelize.literal('date'), 'ASC']]
@@ -40,6 +42,7 @@ async function ordersByDate(req, res) {
   res.json(rows.map(r => r.get({ plain: true })));
 }
 
+// ===== 3️⃣ Top Customers =====
 async function topCustomers(req, res) {
   const tenantId = req.tenantId;
 
@@ -56,12 +59,39 @@ async function topCustomers(req, res) {
     total_spent: c.Orders.reduce((sum, o) => sum + Number(o.total_price || 0), 0)
   }));
 
-  const topCustomers = customerTotals
+  const topCust = customerTotals
     .sort((a, b) => b.total_spent - a.total_spent)
     .slice(0, 10)
     .map(c => ({ ...c, total_spent: Number(c.total_spent.toFixed(2)) }));
 
-  res.json(topCustomers);
+  res.json(topCust);
 }
 
-module.exports = { getMetrics, ordersByDate, topCustomers };
+// ===== 4️⃣ Top Products =====
+async function topProducts(req, res) {
+  const tenantId = req.tenantId;
+
+  const products = await Product.findAll({
+    where: { tenant_id: tenantId },
+    attributes: ['title', 'price'],
+    limit: 10
+  });
+
+  res.json(products.map(p => ({ title: p.title, price: Number(p.price) })));
+}
+
+// ===== 5️⃣ Recent Orders =====
+async function recentOrders(req, res) {
+  const tenantId = req.tenantId;
+
+  const orders = await Order.findAll({
+    where: { tenant_id: tenantId },
+    include: [{ model: Customer, attributes: ['first_name', 'last_name', 'email'] }],
+    order: [['createdAt', 'DESC']],
+    limit: 10
+  });
+
+  res.json(orders);
+}
+
+module.exports = { getMetrics, ordersByDate, topCustomers, topProducts, recentOrders };

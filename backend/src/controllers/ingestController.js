@@ -6,7 +6,7 @@ async function syncShopify(tenantId) {
   if (!tenant || !tenant.api_key) throw new Error('Shopify credentials missing');
 
   // ===== Fetch and upsert Customers =====
-  const customers = await fetchCustomersFromShopify(tenant);
+  const customers = (await fetchCustomersFromShopify(tenant)) || [];
   for (const c of customers) {
     if (!c.id || !c.email) continue;
     await Customer.upsert({
@@ -19,7 +19,7 @@ async function syncShopify(tenantId) {
   }
 
   // ===== Fetch and upsert Orders =====
-  const orders = await fetchOrdersFromShopify(tenant);
+  const orders = (await fetchOrdersFromShopify(tenant)) || [];
   const existingOrders = await Order.findAll({
     where: { tenant_id: tenantId },
     attributes: ['shopify_order_id']
@@ -27,22 +27,25 @@ async function syncShopify(tenantId) {
   const existingOrderIds = new Set(existingOrders.map(o => o.shopify_order_id));
 
   for (const o of orders) {
-    if (!o.id) continue;
+    if (!o.id || !o.customer?.id) continue;
+
     const dbCustomer = await Customer.findOne({
-      where: { tenant_id: tenantId, shopify_customer_id: o.customer?.id?.toString() }
+      where: { tenant_id: tenantId, shopify_customer_id: o.customer.id.toString() }
     });
+    if (!dbCustomer) continue; // skip if customer not found
+
     if (!existingOrderIds.has(o.id.toString())) {
       await Order.create({
         tenant_id: tenantId,
         shopify_order_id: o.id.toString(),
-        customer_id: dbCustomer ? dbCustomer.id : null,
+        customer_id: dbCustomer.id,
         total_price: parseFloat(o.total_price || 0),
-        createdAt: o.created_at || new Date()
+        createdAt: o.created_at ? new Date(o.created_at) : new Date()
       });
     }
   }
 
-  // ===== Recalculate total_spent for each customer =====
+  // ===== Recalculate total_spent =====
   const customerTotals = await Order.findAll({
     where: { tenant_id: tenantId },
     attributes: ['customer_id', [Sequelize.fn('SUM', Sequelize.col('total_price')), 'total']],
@@ -55,7 +58,7 @@ async function syncShopify(tenantId) {
   }
 
   // ===== Fetch and upsert Products =====
-  const products = await fetchProductsFromShopify(tenant);
+  const products = (await fetchProductsFromShopify(tenant)) || [];
   for (const p of products) {
     if (!p.id) continue;
     await Product.upsert({
