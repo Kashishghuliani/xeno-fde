@@ -9,8 +9,15 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT || 5432,
-    dialect: 'postgres', // important: must be 'postgres'
-    logging: false,      // set true to see SQL queries in console
+    dialect: 'postgres', 
+    logging: false,      
+
+    dialectOptions: {
+      ssl: {
+        require: true,            // Enable SSL
+        rejectUnauthorized: false // Allow self-signed certs (needed for Render)
+      }
+    },
   }
 );
 
