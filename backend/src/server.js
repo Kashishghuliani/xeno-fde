@@ -19,21 +19,18 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like curl or mobile apps)
+    // allow requests with no origin (like curl, Postman, mobile apps)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
-      callback(null, true);
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(new Error('Not allowed by CORS'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
-
-// Automatically handle OPTIONS preflight requests
-app.options('*', cors());
 
 // ===== Body Parser =====
 app.use(express.json());
