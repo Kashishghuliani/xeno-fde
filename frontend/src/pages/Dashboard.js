@@ -207,13 +207,15 @@ export default function Dashboard({ tenantId, onLogout }) {
             {section.data.length === 0 ? (
               <p className="text-gray-500">{section.empty}</p>
             ) : (
-              <table className="w-full border-collapse min-w-[400px]">
+              <table className="w-full table-fixed border-collapse min-w-[400px]">
                 <thead>
                   <tr className="bg-blue-600 text-white">
                     {section.cols.map((c, i) => (
                       <th
                         key={i}
-                        className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold text-left`}
+                        className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold text-left ${
+                          i === section.cols.length - 1 ? "" : ""
+                        }`}
                       >
                         {c}
                       </th>
@@ -225,39 +227,25 @@ export default function Dashboard({ tenantId, onLogout }) {
                     <tr key={rIdx} className="hover:bg-gray-50">
                       {section.key === "customer" && (
                         <>
-                          <td className="px-3 sm:px-4 py-2">
-                            {row.first_name} {row.last_name}
-                          </td>
+                          <td className="px-3 sm:px-4 py-2">{row.first_name} {row.last_name}</td>
                           <td className="px-3 sm:px-4 py-2">{row.email}</td>
-                          <td className="px-3 sm:px-4 py-2 text-right">
-                            {Number(row.total_spent).toFixed(2)}
-                          </td>
+                          <td className="px-3 sm:px-4 py-2 text-right">{Number(row.total_spent).toFixed(2)}</td>
                         </>
                       )}
                       {section.key === "product" && (
                         <>
                           <td className="px-3 sm:px-4 py-2">{row.title}</td>
-                          <td className="px-3 sm:px-4 py-2 text-right">
-                            {Number(row.price).toFixed(2)}
-                          </td>
+                          <td className="px-3 sm:px-4 py-2 text-right">{Number(row.price).toFixed(2)}</td>
                         </>
                       )}
                       {section.key === "order" && (
                         <>
-                          <td className="px-3 sm:px-4 py-2">
-                            {row.id || row.shopify_order_id}
-                          </td>
-                          <td className="px-3 sm:px-4 py-2 text-right">
-                            {Number(row.total_price).toFixed(2)}
-                          </td>
+                          <td className="px-3 sm:px-4 py-2">{row.id || row.shopify_order_id}</td>
+                          <td className="px-3 sm:px-4 py-2 text-right">{Number(row.total_price).toFixed(2)}</td>
                           <td className="px-3 sm:px-4 py-2">
                             {row.customer?.first_name
-                              ? `${row.customer.first_name} ${
-                                  row.customer.last_name || ""
-                                }`
-                              : row.customer?.name ||
-                                row.customer ||
-                                "Unknown Customer"}
+                              ? `${row.customer.first_name} ${row.customer.last_name || ""}`
+                              : row.customer?.name || row.customer || "Unknown Customer"}
                           </td>
                         </>
                       )}
