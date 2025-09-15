@@ -6,16 +6,15 @@ const sequelize = require('./sequelize');
 const { Tenant } = require('./models');
 const { syncShopify } = require('./controllers/syncController');
 const dashboardController = require('./controllers/dashboardController');
-
-// Import auth routes
 const authRoutes = require('./routes/auth');
+const tenantMiddleware = require('./middleware/tenantMiddleware'); // ✅ added
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // ===== CORS Setup =====
 app.use(cors({
-  origin: 'https://xeno-fde.vercel.app', // frontend URL
+  origin: 'https://xeno-fde.vercel.app',
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
   credentials: true
@@ -62,16 +61,16 @@ function wrapAsync(fn) {
   };
 }
 
-// ===== Dashboard Routes (with error logging) =====
-app.get('/api/dashboard/metrics', authMiddleware, wrapAsync(dashboardController.getMetrics));
-app.get('/api/dashboard/recent-orders', authMiddleware, wrapAsync(dashboardController.recentOrders));
-app.get('/api/dashboard/top-customers', authMiddleware, wrapAsync(dashboardController.topCustomers));
-app.get('/api/dashboard/top-products', authMiddleware, wrapAsync(dashboardController.topProducts));
-app.get('/api/dashboard/orders-by-date', authMiddleware, wrapAsync(dashboardController.ordersByDate));
-app.get('/api/dashboard/customers-by-date', authMiddleware, wrapAsync(dashboardController.customersByDate));
+// ===== Dashboard Routes (with tenantMiddleware & error logging) =====
+app.get('/api/dashboard/metrics', authMiddleware, tenantMiddleware, wrapAsync(dashboardController.getMetrics));
+app.get('/api/dashboard/recent-orders', authMiddleware, tenantMiddleware, wrapAsync(dashboardController.recentOrders));
+app.get('/api/dashboard/top-customers', authMiddleware, tenantMiddleware, wrapAsync(dashboardController.topCustomers));
+app.get('/api/dashboard/top-products', authMiddleware, tenantMiddleware, wrapAsync(dashboardController.topProducts));
+app.get('/api/dashboard/orders-by-date', authMiddleware, tenantMiddleware, wrapAsync(dashboardController.ordersByDate));
+app.get('/api/dashboard/customers-by-date', authMiddleware, tenantMiddleware, wrapAsync(dashboardController.customersByDate));
 
 // ===== Shopify Sync Route =====
-app.post('/api/sync/shopify', authMiddleware, wrapAsync(syncShopify));
+app.post('/api/sync/shopify', authMiddleware, tenantMiddleware, wrapAsync(syncShopify));
 
 // ===== Start Server =====
 async function initServer() {
