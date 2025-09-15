@@ -128,19 +128,25 @@ export default function Dashboard({ tenantId, onLogout }) {
         {/* Metrics */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10">
           <div className="bg-white rounded-xl shadow p-4 sm:p-6 border-t-4 border-blue-600">
-            <h4 className="text-sm sm:text-base font-medium text-gray-500">Customers</h4>
+            <h4 className="text-sm sm:text-base font-medium text-gray-500">
+              Customers
+            </h4>
             <p className="text-2xl sm:text-3xl font-bold text-blue-700 mt-2">
               {metrics.totalCustomers}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow p-4 sm:p-6 border-t-4 border-blue-600">
-            <h4 className="text-sm sm:text-base font-medium text-gray-500">Orders</h4>
+            <h4 className="text-sm sm:text-base font-medium text-gray-500">
+              Orders
+            </h4>
             <p className="text-2xl sm:text-3xl font-bold text-blue-700 mt-2">
               {metrics.totalOrders}
             </p>
           </div>
           <div className="bg-white rounded-xl shadow p-4 sm:p-6 border-t-4 border-green-600">
-            <h4 className="text-sm sm:text-base font-medium text-gray-500">Revenue</h4>
+            <h4 className="text-sm sm:text-base font-medium text-gray-500">
+              Revenue
+            </h4>
             <p className="text-2xl sm:text-3xl font-bold text-green-600 mt-2">
               ₹{metrics.revenue.toFixed(2)}
             </p>
@@ -168,13 +174,36 @@ export default function Dashboard({ tenantId, onLogout }) {
         </div>
 
         {/* Tables */}
-        {[ 
-          { title: "Top Customers", data: topCustomers, empty: "No customers yet.", cols: ["Name", "Email", "Total Spent (₹)"], key: "customer" },
-          { title: "Top Products", data: topProducts, empty: "No products yet.", cols: ["Product", "Price (₹)"], key: "product" },
-          { title: "Recent Orders", data: recentOrders, empty: "No orders yet.", cols: ["Order ID", "Amount (₹)", "Customer"], key: "order" },
+        {[
+          {
+            title: "Top Customers",
+            data: topCustomers,
+            empty: "No customers yet.",
+            cols: ["Name", "Email", "Total Spent (₹)"],
+            key: "customer",
+          },
+          {
+            title: "Top Products",
+            data: topProducts,
+            empty: "No products yet.",
+            cols: ["Product", "Price (₹)"],
+            key: "product",
+          },
+          {
+            title: "Recent Orders",
+            data: recentOrders,
+            empty: "No orders yet.",
+            cols: ["Order ID", "Amount (₹)", "Customer"],
+            key: "order",
+          },
         ].map((section, idx) => (
-          <div key={idx} className="bg-white rounded-xl shadow p-4 sm:p-6 mb-8 sm:mb-10 overflow-x-auto">
-            <h3 className="text-lg sm:text-xl font-semibold text-blue-700 mb-4">{section.title}</h3>
+          <div
+            key={idx}
+            className="bg-white rounded-xl shadow p-4 sm:p-6 mb-8 sm:mb-10 overflow-x-auto"
+          >
+            <h3 className="text-lg sm:text-xl font-semibold text-blue-700 mb-4">
+              {section.title}
+            </h3>
             {section.data.length === 0 ? (
               <p className="text-gray-500">{section.empty}</p>
             ) : (
@@ -182,7 +211,10 @@ export default function Dashboard({ tenantId, onLogout }) {
                 <thead>
                   <tr className="bg-blue-600 text-white">
                     {section.cols.map((c, i) => (
-                      <th key={i} className={`px-3 sm:px-4 py-2 sm:py-3 text-left text-sm sm:text-base font-semibold ${i === section.cols.length - 1 ? "text-right" : ""}`}>
+                      <th
+                        key={i}
+                        className={`px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base font-semibold text-left`}
+                      >
                         {c}
                       </th>
                     ))}
@@ -193,22 +225,40 @@ export default function Dashboard({ tenantId, onLogout }) {
                     <tr key={rIdx} className="hover:bg-gray-50">
                       {section.key === "customer" && (
                         <>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2">{row.first_name} {row.last_name}</td>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2">{row.email}</td>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2 text-right">{Number(row.total_spent).toFixed(2)}</td>
+                          <td className="px-3 sm:px-4 py-2">
+                            {row.first_name} {row.last_name}
+                          </td>
+                          <td className="px-3 sm:px-4 py-2">{row.email}</td>
+                          <td className="px-3 sm:px-4 py-2 text-right">
+                            {Number(row.total_spent).toFixed(2)}
+                          </td>
                         </>
                       )}
                       {section.key === "product" && (
                         <>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2">{row.title}</td>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2 text-right">{Number(row.price).toFixed(2)}</td>
+                          <td className="px-3 sm:px-4 py-2">{row.title}</td>
+                          <td className="px-3 sm:px-4 py-2 text-right">
+                            {Number(row.price).toFixed(2)}
+                          </td>
                         </>
                       )}
                       {section.key === "order" && (
                         <>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2">{row.id || row.shopify_order_id}</td>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2 text-right">{Number(row.total_price).toFixed(2)}</td>
-                          <td className="px-3 sm:px-4 py-2 sm:py-2">{row.customer?.first_name ? `${row.customer.first_name} ${row.customer.last_name || ""}` : row.customer?.name || row.customer || "Unknown Customer"}</td>
+                          <td className="px-3 sm:px-4 py-2">
+                            {row.id || row.shopify_order_id}
+                          </td>
+                          <td className="px-3 sm:px-4 py-2 text-right">
+                            {Number(row.total_price).toFixed(2)}
+                          </td>
+                          <td className="px-3 sm:px-4 py-2">
+                            {row.customer?.first_name
+                              ? `${row.customer.first_name} ${
+                                  row.customer.last_name || ""
+                                }`
+                              : row.customer?.name ||
+                                row.customer ||
+                                "Unknown Customer"}
+                          </td>
                         </>
                       )}
                     </tr>
