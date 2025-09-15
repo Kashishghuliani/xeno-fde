@@ -19,13 +19,16 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like curl, Postman, mobile apps)
+    // allow requests with no origin (Postman, mobile apps)
     if (!origin) return callback(null, true);
+
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
     }
+
+    console.log(`Blocked CORS request from: ${origin}`);
+    // Respond without Access-Control-Allow-Origin instead of throwing error
+    return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -35,7 +38,7 @@ app.use(cors({
 // ===== Body Parser =====
 app.use(express.json());
 
-// ===== Root Route (Health Check) =====
+// ===== Root Route =====
 app.get('/', (req, res) => {
   res.json({
     status: 'Backend is running!',
@@ -61,7 +64,7 @@ function authMiddleware(req, res, next) {
   }
 }
 
-// ===== Dashboard Routes =====
+// ===== Dashboard Routes (examples) =====
 app.get('/api/dashboard/metrics', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/recent-orders', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/top-customers', authMiddleware, async (req, res) => { /* ... */ });
