@@ -17,7 +17,7 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000').spl
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests
+    if (!origin) return callback(null, true); // allow non-browser requests like Postman
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error(`CORS policy: Origin ${origin} not allowed`));
   },
@@ -25,15 +25,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
-
-// Handle preflight requests for all routes
-app.options('*', cors({
-  origin: allowedOrigins,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
 
 app.use(express.json());
 
@@ -61,7 +52,7 @@ function authMiddleware(req, res, next) {
 }
 
 // ===== Dashboard Routes =====
-// (All your existing dashboard routes remain unchanged)
+// Example placeholders (replace with your actual route handlers)
 app.get('/api/dashboard/metrics', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/recent-orders', authMiddleware, async (req, res) => { /* ... */ });
 app.get('/api/dashboard/top-customers', authMiddleware, async (req, res) => { /* ... */ });
