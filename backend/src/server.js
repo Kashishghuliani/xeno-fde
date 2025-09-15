@@ -4,7 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const sequelize = require('./sequelize');
-const { Tenant, Customer, Order, Product } = require('./models')(sequelize); 
+const { Tenant, Customer, Order, Product } = require('./models'); 
 const { syncShopify } = require('./controllers/syncController');
 
 // Import auth routes
