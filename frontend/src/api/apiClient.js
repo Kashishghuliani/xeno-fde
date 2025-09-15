@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:4000/api',
+  baseURL: `${process.env.REACT_APP_API_URL}/api`,
 });
 
 // Attach token for protected routes automatically
 API.interceptors.request.use(
   (config) => {
-    if (config.url !== '/auth/login') {
+    if (!config.url.includes('/auth/login')) {
       const token = localStorage.getItem('token');
       if (token) config.headers['Authorization'] = `Bearer ${token}`;
     }
