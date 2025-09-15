@@ -1,18 +1,12 @@
-const { Sequelize, DataTypes } = require('sequelize');
-require('dotenv').config();
-
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASS, {
-  host: process.env.DB_HOST,
-  dialect: 'mysql',
-  logging: false
-});
+const sequelize = require('../sequelize'); // your Postgres Sequelize instance
+const { DataTypes } = require('sequelize');
 
 // ===== Models =====
 const Tenant = sequelize.define('Tenant', {
   name: { type: DataTypes.STRING, allowNull: false },
-  shopify_store: DataTypes.STRING,
-  api_key: DataTypes.STRING,
-  api_secret: DataTypes.STRING
+  shopify_store: { type: DataTypes.STRING },
+  api_key: { type: DataTypes.STRING },
+  api_secret: { type: DataTypes.STRING }
 }, { timestamps: true });
 
 const User = sequelize.define('User', {
@@ -26,24 +20,21 @@ const Customer = sequelize.define('Customer', {
   first_name: { type: DataTypes.STRING, allowNull: false },
   last_name: DataTypes.STRING,
   email: { type: DataTypes.STRING, allowNull: false },
-  total_spent: { type: DataTypes.DECIMAL(12,2), defaultValue: 0 }
+  total_spent: { type: DataTypes.DECIMAL(12, 2), defaultValue: 0 }
 }, { timestamps: true });
 
 const Product = sequelize.define('Product', {
-  shopify_product_id: DataTypes.STRING,
-  title: DataTypes.STRING,
-  price: DataTypes.DECIMAL(12,2)
+  shopify_product_id: { type: DataTypes.STRING },
+  title: { type: DataTypes.STRING },
+  price: { type: DataTypes.DECIMAL(12, 2) }
 }, { timestamps: true });
 
 const Order = sequelize.define('Order', {
   shopify_order_id: { type: DataTypes.STRING, allowNull: false },
-  total_price: { type: DataTypes.DECIMAL(12,2), allowNull: false }
+  total_price: { type: DataTypes.DECIMAL(12, 2), allowNull: false }
 }, { timestamps: true });
 
-
 // ===== Associations =====
-
-// Tenant Associations
 Tenant.hasMany(User, { foreignKey: 'tenant_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 Tenant.hasMany(Customer, { foreignKey: 'tenant_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 Tenant.hasMany(Product, { foreignKey: 'tenant_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
@@ -54,10 +45,10 @@ Customer.belongsTo(Tenant, { foreignKey: 'tenant_id' });
 Product.belongsTo(Tenant, { foreignKey: 'tenant_id' });
 Order.belongsTo(Tenant, { foreignKey: 'tenant_id' });
 
-// Customer → Order
 Customer.hasMany(Order, { foreignKey: 'customer_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 Order.belongsTo(Customer, { foreignKey: 'customer_id', onDelete: 'CASCADE', onUpdate: 'CASCADE' });
 
+// ===== Export =====
 module.exports = {
   sequelize,
   Tenant,
